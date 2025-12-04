@@ -122,7 +122,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </section>
 
             {/* クイックアクション */}
-            <section className="card">
+            <section className="card quick-actions-section" id="quick-actions-section">
               <div className="card-header">
                 <h2>クイックアクション</h2>
               </div>
