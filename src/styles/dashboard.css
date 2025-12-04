@@ -103,6 +103,7 @@ body {
 /* ========== メインコンテンツ ========== */
 .dashboard-main {
   padding: 2rem;
+  padding-right: 380px;
   max-width: 1400px;
   margin: 0 auto;
 }
@@ -450,6 +451,17 @@ body {
 }
 
 /* ========== クイックアクション ========== */
+#quick-actions-section {
+  position: fixed;
+  right: 2rem;
+  top: 200px;
+  width: 320px;
+  max-height: calc(100vh - 220px);
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: var(--shadow-lg);
+}
+
 .quick-actions {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -495,6 +507,21 @@ body {
 }
 
 /* ========== レスポンシブ ========== */
+@media (max-width: 1200px) {
+  .dashboard-main {
+    padding-right: 2rem;
+  }
+
+  #quick-actions-section {
+    position: relative;
+    right: auto;
+    top: auto;
+    width: 100%;
+    max-height: none;
+    margin-bottom: 2rem;
+  }
+}
+
 @media (max-width: 768px) {
   .dashboard-header {
     flex-direction: column;
@@ -508,11 +535,35 @@ body {
 
   .dashboard-main {
     padding: 1rem;
+    padding-right: 1rem;
   }
 
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}  }    max-height: none;    width: 100%;    top: auto;    right: auto;    position: relative;  #quick-actions-section {  }    grid-column: 1 / -1;  .right-column {  .left-column,  }    grid-template-columns: 1fr;  .quick-actions {  }    grid-template-columns: 1fr;  .health-status {  }    grid-template-columns: 1fr;  .stats-grid {  }
 
   .health-status {
     grid-template-columns: 1fr;
