@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import {
   Target,
   TrendingUp,
@@ -7,7 +8,6 @@ import {
   BookOpen,
   BarChart3,
   Users,
-  Calendar,
   CheckCircle,
   Clock,
 } from 'lucide-react';
@@ -39,6 +39,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <p className="greeting">{userName}さんへようこそ</p>
         </div>
         <div className="header-actions">
+          <Link to="/social" className="btn btn-ghost sns-btn" title="コミュニティ">
+            <Users size={18} />
+            <span>コミュニティ</span>
+          </Link>
           <button className="btn btn-primary">+ 目標を追加</button>
         </div>
       </header>
@@ -83,7 +87,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <section className="card">
               <div className="card-header">
                 <h2>目標進捗</h2>
-                <a href="/goals" className="link">すべて見る</a>
+                <Link to="/goals" className="link">すべて見る</Link>
               </div>
               <GoalsProgress goals={goals} />
             </section>
@@ -92,7 +96,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <section className="card">
               <div className="card-header">
                 <h2>パフォーマンス分析</h2>
-                <a href="/performance" className="link">詳細を見る</a>
+                <Link to="/performance" className="link">詳細を見る</Link>
               </div>
               <PerformanceChart metrics={healthMetrics} />
             </section>
@@ -112,7 +116,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <section className="card">
               <div className="card-header">
                 <h2>最近の日誌</h2>
-                <a href="/journals" className="link">すべて見る</a>
+                <Link to="/journals" className="link">すべて見る</Link>
               </div>
               <RecentJournals journals={recentJournals} />
             </section>
@@ -334,15 +338,16 @@ const QuickActions: React.FC = () => {
     { icon: <Apple size={20} />, label: '食事を記録', href: '/meals' },
     { icon: <Heart size={20} />, label: '体調を記録', href: '/health' },
     { icon: <BarChart3 size={20} />, label: '進捗を更新', href: '/progress' },
+    { icon: <Users size={20} />, label: 'コミュニティ', href: '/social' },
   ];
 
   return (
     <div className="quick-actions">
       {actions.map((action, index) => (
-        <a key={index} href={action.href} className="quick-action-btn">
+        <Link key={index} to={action.href} className="quick-action-btn">
           <div className="action-icon">{action.icon}</div>
           <span>{action.label}</span>
-        </a>
+        </Link>
       ))}
     </div>
   );

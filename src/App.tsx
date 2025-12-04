@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from './components/Dashboard';
+import Social from './components/Social';
 import { Goal, HealthMetrics, Journal } from './types';
 import './styles/dashboard.css';
 
@@ -174,14 +176,25 @@ function App() {
   ]);
 
   return (
-    <div className="App">
-      <Dashboard
-        goals={goals}
-        healthMetrics={healthMetrics}
-        recentJournals={journals}
-        userName="田中太郎"
-      />
-    </div>
+    <BrowserRouter>
+      <div className="App">
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <Dashboard
+                goals={goals}
+                healthMetrics={healthMetrics}
+                recentJournals={journals}
+                userName="田中太郎"
+              />
+            }
+          />
+          <Route path="/social" element={<Social />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
+    </BrowserRouter>
   );
 }
 
