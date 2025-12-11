@@ -173,7 +173,12 @@ const GoalsProgress: React.FC<GoalsProgressProps> = ({ goals }) => {
         <div key={goal.id} className="goal-item">
           <div className="goal-info">
             <h3>{goal.title}</h3>
-            <p className="goal-category">{goal.category}</p>
+            <div className="goal-meta-row">
+              <span className="goal-category-pill">{goal.category}</span>
+              <span className={`priority-pill priority-${goal.priority}`}>
+                {goal.priority === 'high' ? '高' : goal.priority === 'medium' ? '中' : '低'}
+              </span>
+            </div>
           </div>
           <div className="progress-bar">
             <div

@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from './components/Dashboard';
 import Social from './components/Social';
+import AddGoal from './components/AddGoal';
+import AllGoals from './components/AllGoals';
+import EditGoal from './components/EditGoal';
 import { Goal, HealthMetrics, Journal } from './types';
 import './styles/dashboard.css';
 
 function App() {
   // サンプルデータ
-  const [goals] = useState<Goal[]>([
+  const [goals, setGoals] = useState<Goal[]>([
     {
       id: '1',
       title: 'プログラミングスキル向上',
@@ -175,6 +178,22 @@ function App() {
     },
   ]);
 
+  const handleAddGoal = (newGoal: Omit<Goal, 'id'>) => {
+    const goalWithId: Goal = {
+      ...newGoal,
+      id: `${Date.now()}`,
+    };
+    setGoals([...goals, goalWithId]);
+  };
+
+  const handleUpdateGoal = (id: string, updatedGoal: Omit<Goal, 'id'>) => {
+    setGoals(goals.map(g => g.id === id ? { ...updatedGoal, id } : g));
+  };
+
+  const handleDeleteGoal = (id: string) => {
+    setGoals(goals.filter(g => g.id !== id));
+  };
+
   return (
     <BrowserRouter>
       <div className="App">
@@ -187,6 +206,28 @@ function App() {
                 healthMetrics={healthMetrics}
                 recentJournals={journals}
                 userName="田中太郎"
+              />
+            }
+          />
+          <Route
+            path="/add-goal"
+            element={<AddGoal onAddGoal={handleAddGoal} />}
+          />
+          <Route
+            path="/goals"
+            element={
+              <AllGoals
+                goals={goals}
+                onDeleteGoal={handleDeleteGoal}
+              />
+            }
+          />
+          <Route
+            path="/edit-goal/:id"
+            element={
+              <EditGoal
+                goals={goals}
+                onUpdateGoal={handleUpdateGoal}
               />
             }
           />
