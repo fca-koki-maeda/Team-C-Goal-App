@@ -242,51 +242,104 @@ interface HealthStatusProps {
 }
 
 const HealthStatus: React.FC<HealthStatusProps> = ({ metrics }) => {
+  // 最新3日分のデータを取得（降順）
+  const last3Days = metrics.slice(-3).reverse();
   const today = metrics.find(
     (m) => new Date(m.date).toDateString() === new Date().toDateString()
   );
 
-  if (!today) {
+  if (!today && metrics.length === 0) {
     return (
       <div className="health-status-empty">
-        <p>今日の体調情報をまだ入力していません</p>
+        <p>体調情報をまだ入力していません</p>
         <button className="btn btn-secondary">体調を記録する</button>
       </div>
     );
   }
 
   return (
-    <div className="health-status">
-      <div className="health-item">
-        <Heart size={20} />
-        <div>
-          <span className="health-label">気分</span>
-          <div className="mood-stars">
-            {Array.from({ length: today.mood }).map((_, i) => (
-              <span key={i}>⭐</span>
-            ))}
+    <div>
+      {/* 今日の体調 */}
+      <div style={{ marginBottom: '1.5rem' }}>
+        <h3 style={{ fontSize: '0.95rem', color: '#666', marginBottom: '0.75rem', fontWeight: 600 }}>
+          今日の体調
+        </h3>
+        {today ? (
+          <div className="health-status">
+            <div className="health-item">
+              <Heart size={20} />
+              <div>
+                <span className="health-label">気分</span>
+                <div className="mood-stars">
+                  {Array.from({ length: today.mood }).map((_, i) => (
+                    <span key={i}>⭐</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="health-item">
+              <TrendingUp size={20} />
+              <div>
+                <span className="health-label">エネルギー</span>
+                <span className="health-value">{today.energyLevel}/5</span>
+              </div>
+            </div>
+            <div className="health-item">
+              <Clock size={20} />
+              <div>
+                <span className="health-label">睡眠時間</span>
+                <span className="health-value">{today.sleepHours}時間</span>
+              </div>
+            </div>
+            <div className="health-item">
+              <Apple size={20} />
+              <div>
+                <span className="health-label">睡眠の質</span>
+                <span className="health-value">{today.sleepQuality}/5</span>
+              </div>
+            </div>
           </div>
-        </div>
+        ) : (
+          <p style={{ color: '#999', fontSize: '0.9rem' }}>本日はまだ記録されていません</p>
+        )}
       </div>
-      <div className="health-item">
-        <TrendingUp size={20} />
-        <div>
-          <span className="health-label">エネルギーレベル</span>
-          <span className="health-value">{today.energyLevel}/5</span>
+
+      {/* 過去3日間のプレビュー */}
+      <div>
+        <h3 style={{ fontSize: '0.95rem', color: '#666', marginBottom: '0.75rem', fontWeight: 600 }}>
+          過去3日間の記録
+        </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '1rem' }}>
+          {last3Days.map((metric) => (
+            <div
+              key={metric.id}
+              style={{
+                padding: '0.75rem',
+                background: '#f9fafb',
+                border: '1px solid #e5e7eb',
+                borderRadius: '6px',
+                textAlign: 'center',
+              }}
+            >
+              <div style={{ fontSize: '0.75rem', color: '#999', marginBottom: '0.5rem' }}>
+                {new Date(metric.date).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' })}
+              </div>
+              <div style={{ fontSize: '0.85rem', marginBottom: '0.5rem' }}>
+                <div style={{ color: '#666', fontWeight: 500 }}>
+                  {'⭐'.repeat(metric.mood)}
+                </div>
+              </div>
+              <div style={{ fontSize: '0.8rem', color: '#666' }}>
+                <div>体: {metric.energyLevel}/5</div>
+                <div>眠: {metric.sleepHours}h</div>
+              </div>
+            </div>
+          ))}
         </div>
-      </div>
-      <div className="health-item">
-        <Clock size={20} />
-        <div>
-          <span className="health-label">睡眠時間</span>
-          <span className="health-value">{today.sleepHours}時間</span>
-        </div>
-      </div>
-      <div className="health-item">
-        <Apple size={20} />
-        <div>
-          <span className="health-label">睡眠の質</span>
-          <span className="health-value">{today.sleepQuality}/5</span>
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <Link to="/health" className="btn btn-primary">
+            体調を記録する
+          </Link>
         </div>
       </div>
     </div>
