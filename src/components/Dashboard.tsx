@@ -10,6 +10,7 @@ import {
   Users,
   CheckCircle,
   Clock,
+  Plus,
 } from 'lucide-react';
 import { Goal, HealthMetrics, Journal } from '../types';
 import '../styles/dashboard.css';
@@ -43,7 +44,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <Users size={18} />
             <span>コミュニティ</span>
           </Link>
-          <button className="btn btn-primary">+ 目標を追加</button>
+          <Link to="/add-goal" className="btn btn-primary" title="目標を追加">
+            <Plus size={16} />
+            <span>目標を追加</span>
+          </Link>
         </div>
       </header>
 
@@ -144,9 +148,21 @@ interface StatCardProps {
 }
 
 const StatCard: React.FC<StatCardProps> = ({ icon, label, value, color }) => {
+  // color -> stat-icon クラスマッピング
+  const colorClass =
+    color === 'blue'
+      ? 'emoji-inprogress'
+      : color === 'green'
+      ? 'emoji-completed'
+      : color === 'purple'
+      ? 'emoji-average'
+      : color === 'red'
+      ? 'emoji-mood'
+      : '';
+
   return (
     <div className={`stat-card stat-card-${color}`}>
-      <div className="stat-icon">{icon}</div>
+      <div className={`stat-icon ${colorClass}`}>{icon}</div>
       <div className="stat-content">
         <p className="stat-label">{label}</p>
         <p className="stat-value">{value}</p>
@@ -404,7 +420,6 @@ const RecentJournals: React.FC<RecentJournalsProps> = ({ journals }) => {
 const QuickActions: React.FC = () => {
   const actions = [
     { icon: <BookOpen size={20} />, label: '日誌を書く', href: '/journals' },
-    { icon: <Apple size={20} />, label: '食事を記録', href: '/meals' },
     { icon: <Heart size={20} />, label: '体調を記録', href: '/health' },
     { icon: <BarChart3 size={20} />, label: '進捗を更新', href: '/progress' },
     { icon: <Users size={20} />, label: 'コミュニティ', href: '/social' },
@@ -426,12 +441,11 @@ const QuickActions: React.FC = () => {
 function calculateStats(goals: Goal[], healthMetrics: HealthMetrics[]) {
   const activeGoals = goals.filter((g) => g.status === 'active');
   const completedGoals = goals.filter((g) => g.status === 'completed');
+
+  // 全ての目標の進捗平均を表示するよう変更（追加された目標も反映されます）
   const averageProgress =
-    activeGoals.length > 0
-      ? Math.round(
-          activeGoals.reduce((sum, g) => sum + g.progress, 0) /
-            activeGoals.length
-        )
+    goals.length > 0
+      ? Math.round(goals.reduce((sum, g) => sum + (g.progress || 0), 0) / goals.length)
       : 0;
 
   const latestHealth = healthMetrics[healthMetrics.length - 1];
@@ -444,5 +458,4 @@ function calculateStats(goals: Goal[], healthMetrics: HealthMetrics[]) {
     currentMoodScore,
   };
 }
-
 export default Dashboard;

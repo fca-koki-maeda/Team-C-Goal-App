@@ -103,7 +103,7 @@ body {
 /* ========== メインコンテンツ ========== */
 .dashboard-main {
   padding: 2rem;
-  padding-right: 380px;
+  padding-right: 180px; /* 以前は 380px -> 右端スペースを縮小 */
   max-width: 1400px;
   margin: 0 auto;
 }
@@ -115,17 +115,17 @@ body {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* 幅を小さくして1行に収めやすく */
+  gap: 1rem;
 }
 
 .stat-card {
   background: white;
   border-radius: var(--border-radius);
-  padding: 1.5rem;
+  padding: 1rem; /* パディングを小さく */
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
   box-shadow: var(--shadow);
   transition: all 0.3s ease;
 }
@@ -139,29 +139,36 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 50px;
-  height: 50px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
+  flex-shrink: 0;
+  font-size: 20px;     /* 絵文字サイズ */
+  line-height: 1;
+  color: white;
+  background: var(--gray-light); /* フォールバック色 */
 }
 
-.stat-card-blue .stat-icon {
-  background-color: #dbeafe;
-  color: #0284c7;
+/* SVG/アイコンは親の color を継承して表示 */
+.stat-icon svg {
+  width: 20px;
+  height: 20px;
+  color: inherit;
+  fill: currentColor;
 }
 
-.stat-card-green .stat-icon {
-  background-color: #dcfce7;
-  color: #16a34a;
+.stat-icon.emoji-inprogress {
+  background: linear-gradient(135deg, #06b6d4, #0891b2); /* シアン系 */
 }
-
-.stat-card-purple .stat-icon {
-  background-color: #e9d5ff;
-  color: #9333ea;
+.stat-icon.emoji-completed {
+  background: linear-gradient(135deg, #10b981, #059669); /* 緑系 */
 }
-
-.stat-card-red .stat-icon {
-  background-color: #fee2e2;
-  color: #dc2626;
+.stat-icon.emoji-average {
+  background: linear-gradient(135deg, #f59e0b, #f97316); /* 黄〜橙系 */
+  color: #0b1220;
+}
+.stat-icon.emoji-mood {
+  background: linear-gradient(135deg, #8b5cf6, #6366f1); /* 紫系 */
 }
 
 .stat-content {
@@ -169,13 +176,13 @@ body {
 }
 
 .stat-label {
-  font-size: 0.875rem;
+  font-size: 0.825rem;
   color: var(--gray-color);
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.2rem;
 }
 
 .stat-value {
-  font-size: 1.75rem;
+  font-size: 1.25rem; /* 小さめに調整 */
   font-weight: 700;
   color: var(--dark-color);
 }
@@ -493,10 +500,10 @@ body {
 /* ========== クイックアクション ========== */
 #quick-actions-section {
   position: fixed;
-  right: 2rem;
-  top: 200px;
-  width: 320px;
-  max-height: calc(100vh - 220px);
+  right: 1rem; /* 端に寄せる */
+  top: 160px;
+  width: 140px; /* 幅を縮める */
+  max-height: calc(100vh - 180px);
   overflow-y: auto;
   z-index: 100;
   box-shadow: var(--shadow-lg);
@@ -504,8 +511,8 @@ body {
 
 .quick-actions {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  grid-template-columns: 1fr; /* 縦1列にする */
+  gap: 0.5rem;
 }
 
 .quick-action-btn {
@@ -513,15 +520,15 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 1rem;
+  gap: 6px;
+  padding: 0.45rem 0.5rem; /* 小さめに */
   background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
   color: white;
-  border-radius: var(--border-radius);
+  border-radius: 10px;
   text-decoration: none;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   font-weight: 500;
-  font-size: 0.875rem;
+  font-size: 0.78rem; /* 小さめにして改行を防止 */
   border: none;
   cursor: pointer;
 }
@@ -536,6 +543,15 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* ラベルの改行防止と省略 */
+.quick-action-btn span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  max-width: 100%;
 }
 
 /* ========== 空状態 ========== */
@@ -590,4 +606,21 @@ body {
   .right-column {
     grid-column: 1 / -1;
   }
+}
+
+/* さらに安全のため quick actions の見出しテキストを非表示 */
+#quick-actions-section h1,
+#quick-actions-section h2,
+#quick-actions-section h3,
+#quick-actions-section .quick-actions-title,
+#quick-actions-section .title,
+#quick-actions-section .label {
+  display: none;
+}
+
+/* quick actions 内の見出し境界線を消す（水平線を削除） */
+#quick-actions-section .card-header {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
 }

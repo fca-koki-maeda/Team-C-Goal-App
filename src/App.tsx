@@ -5,6 +5,7 @@ import Social from './components/Social';
 import AddGoal from './components/AddGoal';
 import AllGoals from './components/AllGoals';
 import EditGoal from './components/EditGoal';
+import HealthPage from './components/Health';
 import JournalPage from './components/Journal';
 import JournalsArchive from './components/JournalsArchive';
 import { Goal, HealthMetrics, Journal } from './types';
@@ -81,7 +82,7 @@ function App() {
     },
   ]);
 
-  const [healthMetrics] = useState<HealthMetrics[]>([
+  const [healthMetrics, setHealthMetrics] = useState<HealthMetrics[]>([
     {
       id: '1',
       date: new Date('2024-11-28'),
@@ -196,6 +197,16 @@ function App() {
     setGoals(goals.filter(g => g.id !== id));
   };
 
+  // 追加: 健康データ追加 / 削除ハンドラ
+  const handleAddMetric = (m: Omit<HealthMetrics, 'id'>) => {
+    const metric: HealthMetrics = { ...m, id: `${Date.now()}` };
+    setHealthMetrics((prev) => [...prev, metric]);
+  };
+
+  const handleDeleteMetric = (id: string) => {
+    setHealthMetrics((prev) => prev.filter((x) => x.id !== id));
+  };
+
   return (
     <BrowserRouter>
       <div className="App">
@@ -233,6 +244,19 @@ function App() {
               />
             }
           />
+
+          {/* 追加: 体調記録ページ */}
+          <Route
+            path="/health"
+            element={
+              <HealthPage
+                metrics={healthMetrics}
+                onAddMetric={handleAddMetric}
+                onDeleteMetric={handleDeleteMetric}
+              />
+            }
+          />
+
           <Route path="/social" element={<Social />} />
           <Route path="/journals" element={<JournalPage />} />
           <Route path="/journals/archive" element={<JournalsArchive />} />
