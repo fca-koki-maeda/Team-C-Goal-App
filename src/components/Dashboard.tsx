@@ -405,7 +405,9 @@ const HealthStatus: React.FC<HealthStatusProps> = ({ metrics }) => {
     return (
       <div className="health-status-empty">
         <p>体調情報をまだ入力していません</p>
-        <button className="btn btn-secondary">体調を記録する</button>
+        <Link to="/health" className="btn btn-primary">
+          体調を記録する
+        </Link>
       </div>
     );
   }
