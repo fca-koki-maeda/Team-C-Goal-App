@@ -40,6 +40,22 @@ body {
   background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
 }
 
+/* ---- Drag & Drop UX ---- */
+.card {
+  cursor: grab;
+  user-select: none;
+}
+.card.dragging {
+  cursor: grabbing;
+  opacity: 0.85;
+  transform: scale(0.98);
+}
+
+.left-column,
+.right-column {
+  min-height: 20px; /* 末尾にドロップしやすくする */
+}
+
 .dashboard-header {
   background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
   color: white;

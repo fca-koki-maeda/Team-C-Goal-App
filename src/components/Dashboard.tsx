@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Target,
@@ -31,6 +31,217 @@ export const Dashboard: React.FC<DashboardProps> = ({
   // 統計情報を計算
   const stats = calculateStats(goals, healthMetrics);
 
+  // 並び替え状態（localStorage に永続化）
+  type PanelId = 'goals' | 'perf' | 'health' | 'journals' | 'quick';
+  const STORAGE_KEY = 'dashboard_order_v1';
+
+  const [leftOrder, setLeftOrder] = useState<PanelId[]>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { left: PanelId[]; right: PanelId[] };
+        if (Array.isArray(parsed?.left)) return parsed.left;
+      }
+    } catch {}
+    return ['goals', 'perf']; // 既定: 左カラム
+  });
+
+  const [rightOrder, setRightOrder] = useState<PanelId[]>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { left: PanelId[]; right: PanelId[] };
+        if (Array.isArray(parsed?.right)) return parsed.right;
+      }
+    } catch {}
+    return ['health', 'journals', 'quick']; // 既定: 右カラム
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ left: leftOrder, right: rightOrder })
+      );
+    } catch {}
+  }, [leftOrder, rightOrder]);
+
+  // ドラッグ中カードの視覚状態
+  const [draggingId, setDraggingId] = useState<PanelId | null>(null);
+
+  const moveInArray = (arr: PanelId[], fromId: PanelId, toId: PanelId) => {
+    if (fromId === toId) return arr;
+    const next = arr.filter((x) => x !== fromId);
+    const idx = next.indexOf(toId);
+    next.splice(Math.max(0, idx), 0, fromId); // 「toId」の前に挿入
+    return next;
+  };
+
+  const removeFromArray = (arr: PanelId[], id: PanelId) => arr.filter((x) => x !== id);
+
+  // ドラッグ開始ペイロード
+  const onDragStart = (e: React.DragEvent, id: PanelId, from: 'left' | 'right') => {
+    e.dataTransfer.setData('text/plain', JSON.stringify({ id, from }));
+    e.dataTransfer.effectAllowed = 'move';
+    // 掴んだカードをドラッグイメージとして使用
+    if (e.currentTarget instanceof HTMLElement) {
+      e.dataTransfer.setDragImage(e.currentTarget, 10, 10);
+    }
+    setDraggingId(id);
+  };
+
+  const onDragEnd = () => {
+    setDraggingId(null);
+  };
+
+  const onDropOnCard = (
+    e: React.DragEvent,
+    dropId: PanelId,
+    dropCol: 'left' | 'right'
+  ) => {
+    e.preventDefault();
+    const payload = JSON.parse(e.dataTransfer.getData('text/plain')) as {
+      id: PanelId;
+      from: 'left' | 'right';
+    };
+    const { id, from } = payload;
+    if (!id) return;
+
+    // 同一カラム内の並べ替え or 別カラムへの移動＋挿入
+    if (dropCol === 'left') {
+      if (from === 'left') {
+        setLeftOrder((prev) => moveInArray(prev, id, dropId));
+      } else {
+        setRightOrder((prev) => removeFromArray(prev, id));
+        setLeftOrder((prev) => moveInArray(prev, id, dropId));
+      }
+    } else {
+      if (from === 'right') {
+        setRightOrder((prev) => moveInArray(prev, id, dropId));
+      } else {
+        setLeftOrder((prev) => removeFromArray(prev, id));
+        setRightOrder((prev) => moveInArray(prev, id, dropId));
+      }
+    }
+  };
+
+  const onDropOnColumnEnd = (e: React.DragEvent, dropCol: 'left' | 'right') => {
+    e.preventDefault();
+    const payload = JSON.parse(e.dataTransfer.getData('text/plain')) as {
+      id: PanelId;
+      from: 'left' | 'right';
+    };
+    const { id, from } = payload;
+    if (!id) return;
+
+    if (dropCol === 'left') {
+      if (from === 'left') {
+        setLeftOrder((prev) => [...removeFromArray(prev, id), id]);
+      } else {
+        setRightOrder((prev) => removeFromArray(prev, id));
+        setLeftOrder((prev) => [...prev, id]);
+      }
+    } else {
+      if (from === 'right') {
+        setRightOrder((prev) => [...removeFromArray(prev, id), id]);
+      } else {
+        setLeftOrder((prev) => removeFromArray(prev, id));
+        setRightOrder((prev) => [...prev, id]);
+      }
+    }
+  };
+
+  const renderPanel = (id: PanelId, col: 'left' | 'right') => {
+    switch (id) {
+      case 'goals':
+        return (
+          <section
+            className={`card ${draggingId === 'goals' ? 'dragging' : ''}`}
+            draggable
+            onDragStart={(e) => onDragStart(e, 'goals', col)}
+            onDragEnd={onDragEnd}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => onDropOnCard(e, 'goals', col)}
+          >
+            <div className="card-header">
+              <h2>目標進捗</h2>
+              <Link to="/goals" className="link">すべて見る</Link>
+            </div>
+            <GoalsProgress goals={goals} />
+          </section>
+        );
+      case 'perf':
+        return (
+          <section
+            className={`card ${draggingId === 'perf' ? 'dragging' : ''}`}
+            draggable
+            onDragStart={(e) => onDragStart(e, 'perf', col)}
+            onDragEnd={onDragEnd}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => onDropOnCard(e, 'perf', col)}
+          >
+            <div className="card-header">
+              <h2>パフォーマンス分析</h2>
+              <Link to="/performance" className="link">詳細を見る</Link>
+            </div>
+            <PerformanceChart metrics={healthMetrics} />
+          </section>
+        );
+      case 'health':
+        return (
+          <section
+            className={`card ${draggingId === 'health' ? 'dragging' : ''}`}
+            draggable
+            onDragStart={(e) => onDragStart(e, 'health', col)}
+            onDragEnd={onDragEnd}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => onDropOnCard(e, 'health', col)}
+          >
+            <div className="card-header">
+              <h2>今日の体調管理</h2>
+            </div>
+            <HealthStatus metrics={healthMetrics} />
+          </section>
+        );
+      case 'journals':
+        return (
+          <section
+            className={`card ${draggingId === 'journals' ? 'dragging' : ''}`}
+            draggable
+            onDragStart={(e) => onDragStart(e, 'journals', col)}
+            onDragEnd={onDragEnd}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => onDropOnCard(e, 'journals', col)}
+          >
+            <div className="card-header">
+              <h2>最近の日誌</h2>
+              <Link to="/journals" className="link">すべて見る</Link>
+            </div>
+            <RecentJournals journals={recentJournals} />
+          </section>
+        );
+      case 'quick':
+        return (
+          <section
+            className={`card quick-actions-section ${draggingId === 'quick' ? 'dragging' : ''}`}
+            id="quick-actions-section"
+            draggable
+            onDragStart={(e) => onDragStart(e, 'quick', col)}
+            onDragEnd={onDragEnd}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => onDropOnCard(e, 'quick', col)}
+          >
+            <div className="card-header">
+              <h2>クイックアクション</h2>
+            </div>
+            <QuickActions />
+          </section>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="dashboard">
       {/* ヘッダー */}
@@ -48,90 +259,50 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <Plus size={16} />
             <span>目標を追加</span>
           </Link>
+          {/* レイアウトを初期化 */}
+          <button
+            className="btn btn-secondary"
+            title="レイアウトをリセット"
+            onClick={() => {
+              setLeftOrder(['goals', 'perf']);
+              setRightOrder(['health', 'journals', 'quick']);
+            }}
+          >
+            リセット
+          </button>
         </div>
       </header>
 
       {/* メインコンテンツ */}
       <main className="dashboard-main">
-        {/* 統計情報カード */}
+        {/* 統計情報カード（固定） */}
         <section className="stats-section">
           <div className="stats-grid">
-            <StatCard
-              icon={<Target size={24} />}
-              label="進行中の目標"
-              value={stats.activeGoals}
-              color="blue"
-            />
-            <StatCard
-              icon={<CheckCircle size={24} />}
-              label="完了した目標"
-              value={stats.completedGoals}
-              color="green"
-            />
-            <StatCard
-              icon={<TrendingUp size={24} />}
-              label="平均進捗率"
-              value={`${stats.averageProgress}%`}
-              color="purple"
-            />
-            <StatCard
-              icon={<Heart size={24} />}
-              label="現在の気分スコア"
-              value={stats.currentMoodScore}
-              color="red"
-            />
+            <StatCard icon={<Target size={24} />} label="進行中の目標" value={stats.activeGoals} color="blue" />
+            <StatCard icon={<CheckCircle size={24} />} label="完了した目標" value={stats.completedGoals} color="green" />
+            <StatCard icon={<TrendingUp size={24} />} label="平均進捗率" value={`${stats.averageProgress}%`} color="purple" />
+            <StatCard icon={<Heart size={24} />} label="現在の気分スコア" value={stats.currentMoodScore} color="red" />
           </div>
         </section>
 
-        {/* メインコンテンツグリッド */}
+        {/* 並べ替え可能グリッド */}
         <div className="content-grid">
           {/* 左カラム */}
-          <div className="left-column">
-            {/* 目標進捗 */}
-            <section className="card">
-              <div className="card-header">
-                <h2>目標進捗</h2>
-                <Link to="/goals" className="link">すべて見る</Link>
-              </div>
-              <GoalsProgress goals={goals} />
-            </section>
-
-            {/* パフォーマンス分析 */}
-            <section className="card">
-              <div className="card-header">
-                <h2>パフォーマンス分析</h2>
-                <Link to="/performance" className="link">詳細を見る</Link>
-              </div>
-              <PerformanceChart metrics={healthMetrics} />
-            </section>
+          <div
+            className="left-column"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => onDropOnColumnEnd(e, 'left')}
+          >
+            {leftOrder.map((id) => renderPanel(id, 'left'))}
           </div>
 
           {/* 右カラム */}
-          <div className="right-column">
-            {/* 今日の体調管理 */}
-            <section className="card">
-              <div className="card-header">
-                <h2>今日の体調管理</h2>
-              </div>
-              <HealthStatus metrics={healthMetrics} />
-            </section>
-
-            {/* 最近の日誌 */}
-            <section className="card">
-              <div className="card-header">
-                <h2>最近の日誌</h2>
-                <Link to="/journals" className="link">すべて見る</Link>
-              </div>
-              <RecentJournals journals={recentJournals} />
-            </section>
-
-            {/* クイックアクション */}
-            <section className="card quick-actions-section" id="quick-actions-section">
-              <div className="card-header">
-                <h2>クイックアクション</h2>
-              </div>
-              <QuickActions />
-            </section>
+          <div
+            className="right-column"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => onDropOnColumnEnd(e, 'right')}
+          >
+            {rightOrder.map((id) => renderPanel(id, 'right'))}
           </div>
         </div>
       </main>
