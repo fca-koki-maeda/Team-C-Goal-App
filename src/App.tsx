@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from './components/Dashboard';
 import Social from './components/Social';
@@ -148,38 +148,33 @@ function App() {
     },
   ]);
 
-  const [journals] = useState<Journal[]>([
-    {
-      id: '1',
-      date: new Date('2024-12-04'),
-      title: '今日の成果',
-      content:
-        'ダッシュボード画面の実装が完了した。React と TypeScript を使った実装で、コンポーネント設計も良好。明日からバックエンド API の開発に進む予定。',
-      mood: 5,
-      tags: ['仕事', 'プログラミング', '達成感'],
-      goals: ['1', '4'],
-    },
-    {
-      id: '2',
-      date: new Date('2024-12-03'),
-      title: '朝の走り込み',
-      content:
-        '久しぶりに 10km のランニングに挑戦した。タイムは 1 時間 10 分。マラソン完走へ向けて着実に進んでいる。',
-      mood: 4,
-      tags: ['フィットネス', '運動', 'マラソン'],
-      goals: ['5'],
-    },
-    {
-      id: '3',
-      date: new Date('2024-12-02'),
-      title: 'チームとの会議',
-      content:
-        'プロジェクトの進捗について話し合った。目標達成に向けて、チーム一丸となって取り組むことができている。',
-      mood: 4,
-      tags: ['仕事', 'チームワーク'],
-      goals: ['4'],
-    },
-  ]);
+  // recent journals are read from localStorage so they reflect user-created journals
+  const [recentJournals, setRecentJournals] = useState<Journal[]>(() => {
+    try {
+      const raw = localStorage.getItem('journals_v1');
+      if (!raw) return [];
+      const parsed = JSON.parse(raw) as Array<any>;
+      return parsed.map((p) => ({ ...p, date: new Date(p.date) }));
+    } catch {
+      return [];
+    }
+  });
+
+  // update when other parts of the app change journals
+  useEffect(() => {
+    const h = () => {
+      try {
+        const raw = localStorage.getItem('journals_v1');
+        if (!raw) { setRecentJournals([]); return; }
+        const parsed = JSON.parse(raw) as Array<any>;
+        setRecentJournals(parsed.map((p) => ({ ...p, date: new Date(p.date) })));
+      } catch {
+        setRecentJournals([]);
+      }
+    };
+    window.addEventListener('journals-updated', h);
+    return () => window.removeEventListener('journals-updated', h);
+  }, []);
 
   const handleAddGoal = (newGoal: Omit<Goal, 'id'>) => {
     const goalWithId: Goal = {
@@ -217,7 +212,7 @@ function App() {
               <Dashboard
                 goals={goals}
                 healthMetrics={healthMetrics}
-                recentJournals={journals}
+                recentJournals={recentJournals}
                 userName="田中太郎"
               />
             }
