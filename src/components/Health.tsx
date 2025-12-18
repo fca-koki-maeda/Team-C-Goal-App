@@ -9,32 +9,77 @@ interface HealthPageProps {
   metrics: HealthMetrics[];
   onAddMetric: (m: Omit<HealthMetrics, 'id'>) => void;
   onDeleteMetric: (id: string) => void;
+  onUpdateMetric: (id: string, m: Omit<HealthMetrics, 'id'>) => void;
 }
 
-export default function HealthPage({ metrics, onAddMetric, onDeleteMetric }: HealthPageProps) {
+export default function HealthPage({ metrics, onAddMetric, onDeleteMetric, onUpdateMetric }: HealthPageProps) {
   const navigate = useNavigate();
-  const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const today = new Date().toISOString().split('T')[0];
+  const [date, setDate] = useState<string>(today);
   const [mood, setMood] = useState<number>(3);
   const [sleepHours, setSleepHours] = useState<number>(7);
   const [notes, setNotes] = useState<string>('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  // 選択された日付に既存の記録があるかチェック
+  const getExistingRecordForDate = (targetDate: string) => {
+    return metrics.find(
+      (m) => new Date(m.date).toISOString().split('T')[0] === targetDate
+    );
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
     const metric: Omit<HealthMetrics, 'id'> = {
       date: new Date(date),
       mood,
-      energyLevel: mood, // 簡易に mood と同等
+      energyLevel: mood,
       sleepHours,
-      sleepQuality: Math.min(5, Math.max(1, Math.round((sleepHours / 12) * 5))), // 簡易推定
+      sleepQuality: Math.min(5, Math.max(1, Math.round((sleepHours / 12) * 5))),
       notes,
     };
-    onAddMetric(metric);
+
+    // その日付に既存の記録があるか確認
+    const existingRecord = getExistingRecordForDate(date);
+
+    if (existingRecord) {
+      // 既存の記録を上書き(更新)
+      onUpdateMetric(existingRecord.id, metric);
+    } else {
+      // 新規追加
+      onAddMetric(metric);
+    }
+
     // フォームリセット
     setMood(3);
     setSleepHours(7);
     setNotes('');
-    setDate(new Date().toISOString().split('T')[0]);
+    setDate(today);
+    setEditingId(null);
   };
+
+  const handleEdit = (m: HealthMetrics) => {
+    setDate(new Date(m.date).toISOString().split('T')[0]);
+    setMood(m.mood);
+    setSleepHours(m.sleepHours);
+    setNotes(m.notes);
+    setEditingId(m.id);
+    // フォームにスクロール
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setMood(3);
+    setSleepHours(7);
+    setNotes('');
+    setDate(today);
+  };
+
+  // 選択中の日付に既存の記録があるかチェック
+  const existingRecord = getExistingRecordForDate(date);
+  const isUpdating = existingRecord !== undefined;
 
   return (
     <div className="dashboard">
@@ -46,21 +91,53 @@ export default function HealthPage({ metrics, onAddMetric, onDeleteMetric }: Hea
           </button>
           <div className="header-content" style={{ margin: 0 }}>
             <h1 style={{ margin: 0 }}>体調を記録する</h1>
-            <p className="greeting" style={{ marginTop: 4 }}>過去の記録の閲覧・削除ができます</p>
+            <p className="greeting" style={{ marginTop: 4 }}>1日につき1つの記録のみ保存できます</p>
           </div>
         </div>
       </header>
 
       <main className="dashboard-main">
         <section className="card" style={{ marginBottom: 16 }}>
+          {editingId && (
+            <div style={{ padding: '12px', background: '#fef3c7', borderRadius: 6, marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontWeight: 600, color: '#92400e' }}>編集モード: {date} の記録を編集中</span>
+              <button
+                type="button"
+                onClick={handleCancelEdit}
+                style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #d97706', background: '#fff', cursor: 'pointer' }}
+              >
+                キャンセル
+              </button>
+            </div>
+          )}
+
+          {isUpdating && !editingId && (
+            <div style={{ padding: '12px', background: '#dbeafe', borderRadius: 6, marginBottom: 12 }}>
+              <span style={{ fontWeight: 600, color: '#1e40af' }}>
+                {date} にはすでに記録が存在します。保存すると上書きされます。
+              </span>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 12 }}>
             <div className="form-group">
               <label>日付</label>
-              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+              <input
+                type="date"
+                value={date}
+                max={today}
+                onChange={(e) => {
+                  setDate(e.target.value);
+                  // 日付変更時に編集モードをクリア
+                  if (editingId) {
+                    setEditingId(null);
+                  }
+                }}
+              />
             </div>
 
             <div className="form-group">
-              <label>体調（1〜5）</label>
+              <label>体調(1〜5)</label>
               <div style={{ display: 'flex', gap: 8 }}>
                 {[1,2,3,4,5].map((v) => (
                   <button
@@ -83,7 +160,7 @@ export default function HealthPage({ metrics, onAddMetric, onDeleteMetric }: Hea
             </div>
 
             <div className="form-group">
-              <label>睡眠時間（時間）</label>
+              <label>睡眠時間(時間)</label>
               <select value={sleepHours} onChange={(e) => setSleepHours(Number(e.target.value))}>
                 {Array.from({ length: 13 }).map((_, i) => (
                   <option key={i} value={i}>{i} 時間</option>
@@ -97,7 +174,18 @@ export default function HealthPage({ metrics, onAddMetric, onDeleteMetric }: Hea
             </div>
 
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button type="submit" className="btn btn-primary">保存</button>
+              {editingId && (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleCancelEdit}
+                >
+                  キャンセル
+                </button>
+              )}
+              <button type="submit" className="btn btn-primary">
+                {isUpdating ? '上書き保存' : '保存'}
+              </button>
             </div>
           </form>
         </section>
@@ -120,8 +208,26 @@ export default function HealthPage({ metrics, onAddMetric, onDeleteMetric }: Hea
                     {m.notes && <div style={{ color: '#444', marginTop: 6 }}>{m.notes}</div>}
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <button className="btn btn-secondary" onClick={() => navigator.clipboard?.writeText(JSON.stringify(m))}>共有</button>
-                    <button className="btn btn-danger" onClick={() => { if (confirm('この記録を削除しますか？')) onDeleteMetric(m.id); }}>削除</button>
+                    <button
+                      className="btn btn-secondary"
+                      onClick={() => handleEdit(m)}
+                    >
+                      編集
+                    </button>
+                    <button
+                      className="btn btn-danger"
+                      onClick={() => {
+                        if (confirm('この記録を削除しますか?')) {
+                          onDeleteMetric(m.id);
+                          // 編集中の記録を削除した場合は編集モードを解除
+                          if (editingId === m.id) {
+                            handleCancelEdit();
+                          }
+                        }
+                      }}
+                    >
+                      削除
+                    </button>
                   </div>
                 </div>
               ))}

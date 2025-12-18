@@ -82,71 +82,7 @@ function App() {
     },
   ]);
 
-  const [healthMetrics, setHealthMetrics] = useState<HealthMetrics[]>([
-    {
-      id: '1',
-      date: new Date('2024-11-28'),
-      mood: 4,
-      energyLevel: 4,
-      sleepHours: 7.5,
-      sleepQuality: 4,
-      notes: '充実した一日だった',
-    },
-    {
-      id: '2',
-      date: new Date('2024-11-29'),
-      mood: 3,
-      energyLevel: 3,
-      sleepHours: 6,
-      sleepQuality: 3,
-      notes: 'ちょっと疲れ気味',
-    },
-    {
-      id: '3',
-      date: new Date('2024-11-30'),
-      mood: 5,
-      energyLevel: 4,
-      sleepHours: 8,
-      sleepQuality: 5,
-      notes: '十分な睡眠が取れた',
-    },
-    {
-      id: '4',
-      date: new Date('2024-12-01'),
-      mood: 4,
-      energyLevel: 4,
-      sleepHours: 7,
-      sleepQuality: 4,
-      notes: '良い調子',
-    },
-    {
-      id: '5',
-      date: new Date('2024-12-02'),
-      mood: 4,
-      energyLevel: 5,
-      sleepHours: 8,
-      sleepQuality: 4,
-      notes: 'モチベーション高い',
-    },
-    {
-      id: '6',
-      date: new Date('2024-12-03'),
-      mood: 3,
-      energyLevel: 3,
-      sleepHours: 6.5,
-      sleepQuality: 3,
-      notes: '仕事が忙しかった',
-    },
-    {
-      id: '7',
-      date: new Date('2024-12-04'),
-      mood: 5,
-      energyLevel: 5,
-      sleepHours: 8.5,
-      sleepQuality: 5,
-      notes: 'リフレッシュできた',
-    },
-  ]);
+  const [healthMetrics, setHealthMetrics] = useState<HealthMetrics[]>([]);
 
   // recent journals are read from localStorage so they reflect user-created journals
   const [recentJournals, setRecentJournals] = useState<Journal[]>(() => {
@@ -207,6 +143,12 @@ function App() {
     setHealthMetrics((prev) => prev.filter((x) => x.id !== id));
   };
 
+  const handleUpdateMetric = (id: string, m: Omit<HealthMetrics, 'id'>) => {
+    setHealthMetrics((prev) =>
+      prev.map((x) => (x.id === id ? { ...m, id } : x))
+    );
+  };
+
   return (
     <BrowserRouter>
       <div className="App">
@@ -254,6 +196,7 @@ function App() {
                 metrics={healthMetrics}
                 onAddMetric={handleAddMetric}
                 onDeleteMetric={handleDeleteMetric}
+                onUpdateMetric={handleUpdateMetric}
               />
             }
           />
