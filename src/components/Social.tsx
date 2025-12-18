@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, FormEvent } from 'react';
+import { useEffect, useMemo, useState, FormEvent } from 'react';
 
 type Community = {
 	id: string;

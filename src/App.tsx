@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from './components/Dashboard';
 import Social from './components/Social';
 import AddGoal from './components/AddGoal';
 import AllGoals from './components/AllGoals';
 import EditGoal from './components/EditGoal';
-import HealthPage from './components/Health'; // 追加
+import HealthPage from './components/Health';
+import JournalPage from './components/Journal';
+import JournalsArchive from './components/JournalsArchive';
 import { Goal, HealthMetrics, Journal } from './types';
 import './styles/dashboard.css';
 
@@ -256,6 +258,8 @@ function App() {
           />
 
           <Route path="/social" element={<Social />} />
+          <Route path="/journals" element={<JournalPage />} />
+          <Route path="/journals/archive" element={<JournalsArchive />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
