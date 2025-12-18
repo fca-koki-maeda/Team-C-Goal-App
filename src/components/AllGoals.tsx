@@ -1,20 +1,22 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit2, Trash2, CheckCircle, Clock } from 'lucide-react';
+import { ArrowLeft, Edit2, Trash2, CheckCircle, Clock, PauseCircle } from 'lucide-react';
 import { Goal } from '../types';
 import '../styles/all-goals.css';
 
 interface AllGoalsProps {
   goals: Goal[];
   onDeleteGoal: (id: string) => void;
+  onChangeStatus: (id: string, status: Goal['status']) => void; // 追加
 }
 
-const AllGoals: React.FC<AllGoalsProps> = ({ goals, onDeleteGoal }) => {
+const AllGoals: React.FC<AllGoalsProps> = ({ goals, onDeleteGoal, onChangeStatus }) => {
   const navigate = useNavigate();
-  const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
+  const [filter, setFilter] = useState<'all' | 'active' | 'paused' | 'completed'>('all'); // 追加
 
   const filteredGoals = goals.filter((goal) => {
     if (filter === 'active') return goal.status === 'active';
+    if (filter === 'paused') return goal.status === 'paused';
     if (filter === 'completed') return goal.status === 'completed';
     return true;
   });
@@ -23,6 +25,15 @@ const AllGoals: React.FC<AllGoalsProps> = ({ goals, onDeleteGoal }) => {
     if (window.confirm('この目標を削除してもよろしいですか？')) {
       onDeleteGoal(id);
     }
+  };
+
+  // ステータスをワンクリックでサイクル
+  const cycleStatus = (s: Goal['status']): Goal['status'] =>
+    s === 'active' ? 'paused' : s === 'paused' ? 'completed' : 'active';
+
+  const handleStatusClick = (g: Goal) => {
+    const next = cycleStatus(g.status);
+    onChangeStatus(g.id, next);
   };
 
   return (
@@ -56,6 +67,12 @@ const AllGoals: React.FC<AllGoalsProps> = ({ goals, onDeleteGoal }) => {
             進行中 ({goals.filter((g) => g.status === 'active').length})
           </button>
           <button
+            className={`tab ${filter === 'paused' ? 'active' : ''}`}
+            onClick={() => setFilter('paused')}
+          >
+            一時停止 ({goals.filter((g) => g.status === 'paused').length})
+          </button>
+          <button
             className={`tab ${filter === 'completed' ? 'active' : ''}`}
             onClick={() => setFilter('completed')}
           >
@@ -72,13 +89,22 @@ const AllGoals: React.FC<AllGoalsProps> = ({ goals, onDeleteGoal }) => {
           <div className="goals-grid">
             {filteredGoals.map((goal) => (
               <div key={goal.id} className="goal-card card">
-                {/* ステータスバッジ */}
+                {/* ステータスバッジ（クリックで変更） */}
                 <div className="goal-header">
-                  <div className="status-badge">
+                  <button
+                    className={`status-badge ${goal.status === 'completed' ? 'completed' : ''} ${goal.status === 'paused' ? 'paused' : ''}`}
+                    onClick={() => handleStatusClick(goal)}
+                    title="クリックしてステータスを変更"
+                  >
                     {goal.status === 'completed' ? (
                       <>
                         <CheckCircle size={16} />
                         完了
+                      </>
+                    ) : goal.status === 'paused' ? (
+                      <>
+                        <PauseCircle size={16} />
+                        一時停止
                       </>
                     ) : (
                       <>
@@ -86,7 +112,7 @@ const AllGoals: React.FC<AllGoalsProps> = ({ goals, onDeleteGoal }) => {
                         進行中
                       </>
                     )}
-                  </div>
+                  </button>
                   <div className="priority-badge" data-priority={goal.priority}>
                     {goal.priority === 'high' && '高'}
                     {goal.priority === 'medium' && '中'}
