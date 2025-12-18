@@ -32,7 +32,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const stats = calculateStats(goals, healthMetrics);
 
   // 並び替え状態（localStorage に永続化）
-  type PanelId = 'goals' | 'perf' | 'health' | 'journals' | 'quick';
+  type PanelId = 'goals' | 'health' | 'journals' | 'quick';
   const STORAGE_KEY = 'dashboard_order_v1';
 
   const [leftOrder, setLeftOrder] = useState<PanelId[]>(() => {
@@ -40,10 +40,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as { left: PanelId[]; right: PanelId[] };
-        if (Array.isArray(parsed?.left)) return parsed.left;
+        if (Array.isArray(parsed?.left)) {
+          // 'perf'が含まれている場合は除外
+          return parsed.left.filter(id => id !== 'perf' as any);
+        }
       }
     } catch {}
-    return ['goals', 'perf']; // 既定: 左カラム
+    return ['goals']; // 既定: 左カラム
   });
 
   const [rightOrder, setRightOrder] = useState<PanelId[]>(() => {
@@ -51,7 +54,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as { left: PanelId[]; right: PanelId[] };
-        if (Array.isArray(parsed?.right)) return parsed.right;
+        if (Array.isArray(parsed?.right)) {
+          // 'perf'が含まれている場合は除外
+          return parsed.right.filter(id => id !== 'perf' as any);
+        }
       }
     } catch {}
     return ['health', 'journals', 'quick']; // 既定: 右カラム
@@ -170,23 +176,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <GoalsProgress goals={goals} />
           </section>
         );
-      case 'perf':
-        return (
-          <section
-            className={`card ${draggingId === 'perf' ? 'dragging' : ''}`}
-            draggable
-            onDragStart={(e) => onDragStart(e, 'perf', col)}
-            onDragEnd={onDragEnd}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => onDropOnCard(e, 'perf', col)}
-          >
-            <div className="card-header">
-              <h2>パフォーマンス分析</h2>
-              <Link to="/performance" className="link">詳細を見る</Link>
-            </div>
-            <PerformanceChart metrics={healthMetrics} />
-          </section>
-        );
       case 'health':
         return (
           <section
@@ -264,7 +253,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className="btn btn-secondary"
             title="レイアウトをリセット"
             onClick={() => {
-              setLeftOrder(['goals', 'perf']);
+              setLeftOrder(['goals']);
               setRightOrder(['health', 'journals', 'quick']);
             }}
           >
@@ -396,54 +385,6 @@ const GoalsProgress: React.FC<GoalsProgressProps> = ({ goals }) => {
           <span className="progress-text">{goal.progress}%</span>
         </div>
       ))}
-    </div>
-  );
-};
-
-// パフォーマンスチャート
-interface PerformanceChartProps {
-  metrics: HealthMetrics[];
-}
-
-const PerformanceChart: React.FC<PerformanceChartProps> = ({ metrics }) => {
-  if (metrics.length === 0) {
-    return <p className="empty-state">データがありません</p>;
-  }
-
-  const lastWeek = metrics.slice(-7);
-  const avgMood = (
-    lastWeek.reduce((sum, m) => sum + m.mood, 0) / lastWeek.length
-  ).toFixed(1);
-  const avgEnergy = (
-    lastWeek.reduce((sum, m) => sum + m.energyLevel, 0) / lastWeek.length
-  ).toFixed(1);
-  const avgSleep = (
-    lastWeek.reduce((sum, m) => sum + m.sleepHours, 0) / lastWeek.length
-  ).toFixed(1);
-
-  return (
-    <div className="performance-metrics">
-      <div className="metric-item">
-        <Heart size={20} />
-        <div className="metric-info">
-          <span className="metric-label">平均気分スコア</span>
-          <span className="metric-value">{avgMood}/5</span>
-        </div>
-      </div>
-      <div className="metric-item">
-        <TrendingUp size={20} />
-        <div className="metric-info">
-          <span className="metric-label">平均エネルギーレベル</span>
-          <span className="metric-value">{avgEnergy}/5</span>
-        </div>
-      </div>
-      <div className="metric-item">
-        <Clock size={20} />
-        <div className="metric-info">
-          <span className="metric-label">平均睡眠時間</span>
-          <span className="metric-value">{avgSleep}時間</span>
-        </div>
-      </div>
     </div>
   );
 };
