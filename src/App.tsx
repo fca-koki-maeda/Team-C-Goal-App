@@ -192,6 +192,11 @@ function App() {
     setGoals(goals.filter(g => g.id !== id));
   };
 
+  // ステータス変更（ワンクリック用）
+  const handleChangeGoalStatus = (id: string, status: Goal['status']) => {
+    setGoals((prev) => prev.map((g) => g.id === id ? { ...g, status } : g));
+  };
+
   // 追加: 健康データ追加 / 削除ハンドラ
   const handleAddMetric = (m: Omit<HealthMetrics, 'id'>) => {
     const metric: HealthMetrics = { ...m, id: `${Date.now()}` };
@@ -227,6 +232,7 @@ function App() {
               <AllGoals
                 goals={goals}
                 onDeleteGoal={handleDeleteGoal}
+                onChangeStatus={handleChangeGoalStatus}
               />
             }
           />

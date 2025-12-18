@@ -360,15 +360,23 @@ interface GoalsProgressProps {
 }
 
 const GoalsProgress: React.FC<GoalsProgressProps> = ({ goals }) => {
-  const activeGoals = goals.filter((g) => g.status === 'active').slice(0, 5);
+  // 表示条件:
+  // - ステータス: 進行中のみ
+  // - 進捗: 100%未満
+  // 並び順: 優先度 高 -> 中 -> 低
+  const priorityOrder: Record<Goal['priority'], number> = { high: 0, medium: 1, low: 2 };
+  const visibleGoals = goals
+    .filter((g) => g.status === 'active' && g.progress < 100)
+    .sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority])
+    .slice(0, 5);
 
-  if (activeGoals.length === 0) {
+  if (visibleGoals.length === 0) {
     return <p className="empty-state">目標がありません</p>;
   }
 
   return (
     <div className="goals-list">
-      {activeGoals.map((goal) => (
+      {visibleGoals.map((goal) => (
         <div key={goal.id} className="goal-item">
           <div className="goal-info">
             <h3>{goal.title}</h3>
