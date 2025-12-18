@@ -251,11 +251,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <p className="greeting">{userName}さんへようこそ</p>
         </div>
         <div className="header-actions">
-          <Link to="/social" className="btn btn-ghost sns-btn" title="コミュニティ">
+          <Link to="/social" className="btn btn-secondary" title="コミュニティ">
             <Users size={18} />
             <span>コミュニティ</span>
           </Link>
-          <Link to="/add-goal" className="btn btn-primary" title="目標を追加">
+          <Link to="/add-goal" className="btn btn-secondary" title="目標を追加">
             <Plus size={16} />
             <span>目標を追加</span>
           </Link>
@@ -592,7 +592,7 @@ const QuickActions: React.FC = () => {
   const actions = [
     { icon: <BookOpen size={20} />, label: '日誌を書く', href: '/journals' },
     { icon: <Heart size={20} />, label: '体調を記録', href: '/health' },
-    { icon: <BarChart3 size={20} />, label: '進捗を更新', href: '/progress' },
+    { icon: <BarChart3 size={20} />, label: '進捗を更新', href: '/goals' },
     { icon: <Users size={20} />, label: 'コミュニティ', href: '/social' },
   ];
 

@@ -82,7 +82,6 @@ body {
   gap: 1rem;
 }
 
-/* ========== ボタン ========== */
 .btn {
   padding: 0.75rem 1.5rem;
   border: none;
@@ -94,6 +93,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  text-decoration: none;
 }
 
 .btn-primary {
@@ -114,6 +114,19 @@ body {
 
 .btn-secondary:hover {
   background-color: var(--gray-lighter);
+}
+
+/* 新規追加: .btn-ghost スタイル（削除） */
+/* 代わりに sns-btn に .btn-secondary を適用 */
+.sns-btn {
+  background-color: var(--gray-light);
+  color: var(--dark-color);
+}
+
+.sns-btn:hover {
+  background-color: var(--gray-lighter);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 /* ========== メインコンテンツ ========== */
