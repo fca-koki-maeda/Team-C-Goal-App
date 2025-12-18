@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import { HealthMetrics } from '../types';
 import '../styles/dashboard.css';
+import '../styles/add-goal.css';
 
 interface HealthPageProps {
   metrics: HealthMetrics[];
@@ -9,6 +12,7 @@ interface HealthPageProps {
 }
 
 export default function HealthPage({ metrics, onAddMetric, onDeleteMetric }: HealthPageProps) {
+  const navigate = useNavigate();
   const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [mood, setMood] = useState<number>(3);
   const [sleepHours, setSleepHours] = useState<number>(7);
@@ -34,10 +38,16 @@ export default function HealthPage({ metrics, onAddMetric, onDeleteMetric }: Hea
 
   return (
     <div className="dashboard">
-      <header className="dashboard-header">
-        <div className="header-content">
-          <h1>体調を記録する</h1>
-          <p className="greeting">過去の記録の閲覧・削除ができます</p>
+      <header className="dashboard-header" style={{ display: 'flex', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button className="back-btn" onClick={() => navigate('/')} aria-label="戻る" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <ArrowLeft size={20} />
+            <span>戻る</span>
+          </button>
+          <div className="header-content" style={{ margin: 0 }}>
+            <h1 style={{ margin: 0 }}>体調を記録する</h1>
+            <p className="greeting" style={{ marginTop: 4 }}>過去の記録の閲覧・削除ができます</p>
+          </div>
         </div>
       </header>
 
