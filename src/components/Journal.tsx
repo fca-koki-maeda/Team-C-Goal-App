@@ -13,15 +13,6 @@ type JournalItem = {
 
 const STORAGE_KEY = 'journals_v1';
 
-function shuffle<T>(arr: T[]) {
-	const a = [...arr];
-	for (let i = a.length - 1; i > 0; i--) {
-		const j = Math.floor(Math.random() * (i + 1));
-		[a[i], a[j]] = [a[j], a[i]];
-	}
-	return a;
-}
-
 const styles = {
 	container: { padding: 16, maxWidth: 900, margin: '0 auto' },
 	form: { marginBottom: 18, padding: 12, border: '1px solid #e6e6e6', borderRadius: 8, background: '#fff' },
@@ -41,13 +32,41 @@ export default function Journal(): JSX.Element {
 	const [dateValue, setDateValue] = useState(() => new Date().toISOString().slice(0, 10));
 	const [isEditing, setIsEditing] = useState(false);
 	const [recent, setRecent] = useState<JournalItem[]>([]);
+	const [selectedTags, setSelectedTags] = useState<string[]>([]);
+	const [dateFrom, setDateFrom] = useState<string>('');
+	const [dateTo, setDateTo] = useState<string>('');
 
-	// load recent 6 on mount and prefill edit if editId provided
-	useEffect(() => {
+	// applied filters (only when user presses 検索)
+	const [appliedTags, setAppliedTags] = useState<string[]>([]);
+	const [appliedDateFrom, setAppliedDateFrom] = useState<string>('');
+	const [appliedDateTo, setAppliedDateTo] = useState<string>('');
+
+	const toggleTag = (tag: string) => setSelectedTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
+
+	// load all journals and compute recent when editId or selectedTags change, and listen to updates
+useEffect(() => {
+	const load = () => {
 		try {
 			const raw = localStorage.getItem(STORAGE_KEY);
 			const list: JournalItem[] = raw ? (JSON.parse(raw) as JournalItem[]) : [];
-			setRecent(list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 6));
+			// updated list loaded
+			const sorted = list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+			setRecent(
+				sorted
+					.filter((it) => {
+						if (selectedTags.length > 0 && !it.tags.some((t) => selectedTags.includes(t))) return false;
+						if (dateFrom) {
+							const df = new Date(dateFrom + 'T00:00:00');
+							if (new Date(it.date) < df) return false;
+						}
+						if (dateTo) {
+							const dt = new Date(dateTo + 'T23:59:59');
+							if (new Date(it.date) > dt) return false;
+						}
+						return true;
+					})
+					.slice(0, 6)
+			);
 			if (editId) {
 				const found = list.find((l) => l.id === editId);
 				if (found) {
@@ -59,9 +78,16 @@ export default function Journal(): JSX.Element {
 				}
 			}
 		} catch (e) {
+			// on error, nothing to load
 			setRecent([]);
 		}
-	}, [editId]);
+	};
+
+	load();
+	const h = () => load();
+	window.addEventListener('journals-updated', h);
+	return () => window.removeEventListener('journals-updated', h);
+}, [editId, appliedTags, appliedDateFrom, appliedDateTo]);
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
@@ -86,7 +112,12 @@ export default function Journal(): JSX.Element {
 			}
 			localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
 			window.dispatchEvent(new Event('journals-updated'));
-			setRecent(list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 6));
+			const sorted = list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+			setRecent(
+				sorted
+					.filter((it) => (selectedTags.length === 0 ? true : it.tags.some((t) => selectedTags.includes(t))))
+					.slice(0, 6)
+			);
 		} catch (e) {
 			// ignore
 		}
@@ -109,6 +140,41 @@ export default function Journal(): JSX.Element {
 
 	return (
 		<div style={styles.container}>
+			{/* タグクラウド */}
+			<section style={{ marginBottom: 12 }}>
+				<div style={{ marginBottom: 8, fontWeight: 700 }}>タグで絞り込み</div>
+				<div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+					{(() => {
+						try {
+							const raw = localStorage.getItem(STORAGE_KEY) || '[]';
+							const list = JSON.parse(raw) as JournalItem[];
+							const s = new Set<string>();
+							list.forEach((j) => j.tags.forEach((t) => s.add(t)));
+							const tags = Array.from(s).sort();
+							if (tags.length === 0) return <div style={{ color: '#666' }}>タグがありません</div>;
+							return tags.map((tag) => {
+								const active = selectedTags.includes(tag);
+								return (
+									<button key={tag} type="button" onClick={() => toggleTag(tag)} style={{ padding: '6px 10px', borderRadius: 16, background: active ? '#0078d4' : '#f3f5f7', color: active ? '#fff' : '#222', border: active ? '1px solid #005a9e' : '1px solid rgba(0,0,0,0.06)' }}>{tag}</button>
+								);
+							});
+						} catch (e) {
+							return <div style={{ color: '#666' }}>タグがありません</div>;
+						}
+					})()}
+				</div>
+				<div style={{ marginTop: 8, display: 'flex', gap: 8, alignItems: 'center' }}>
+					<button type="button" onClick={() => { setSelectedTags([]); setDateFrom(''); setDateTo(''); }} style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #d0d0d0', background: '#fff' }}>クリア</button>
+					<span style={{ alignSelf: 'center', color: '#666' }}>{selectedTags.length > 0 ? `${selectedTags.length} 個選択中` : 'すべて'}</span>
+					<div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+						<label style={{ fontSize: 12, color: '#666' }}>期間</label>
+						<input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid #d0d0d0' }} />
+						<span style={{ color: '#666' }}>〜</span>
+						<input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid #d0d0d0' }} />
+						<button type="button" onClick={() => { setAppliedTags(selectedTags); setAppliedDateFrom(dateFrom); setAppliedDateTo(dateTo); }} style={{ padding: '6px 10px', borderRadius: 6, background: '#0078d4', color: '#fff', border: 'none' }}>検索</button>
+					</div>
+				</div>
+			</section>
 			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
 				<h2 style={{ margin: 0 }}>日誌</h2>
 				<div style={{ display: 'flex', gap: 8 }}>

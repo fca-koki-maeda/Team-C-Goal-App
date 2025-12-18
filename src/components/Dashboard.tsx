@@ -293,7 +293,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => onDropOnColumnEnd(e, 'left')}
           >
-            {leftOrder.map((id) => renderPanel(id, 'left'))}
+            {(() => {
+              const seen = new Set<PanelId>();
+              const leftSanitized = leftOrder.filter((id) => {
+                if (seen.has(id)) return false;
+                seen.add(id);
+                return true;
+              });
+              return leftSanitized.map((id) => renderPanel(id, 'left'));
+            })()}
           </div>
 
           {/* 右カラム */}
@@ -302,7 +310,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => onDropOnColumnEnd(e, 'right')}
           >
-            {rightOrder.map((id) => renderPanel(id, 'right'))}
+            {(() => {
+              const leftSeen = new Set(leftOrder);
+              const rightSanitized = rightOrder.filter((id) => !leftSeen.has(id)).filter((id, idx, arr) => arr.indexOf(id) === idx);
+              return rightSanitized.map((id) => renderPanel(id, 'right'));
+            })()}
           </div>
         </div>
       </main>
