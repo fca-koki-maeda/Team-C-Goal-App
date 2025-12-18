@@ -357,7 +357,18 @@ interface RecentJournalsProps {
 }
 
 const RecentJournals: React.FC<RecentJournalsProps> = ({ journals }) => {
-  const recent = journals.slice(0, 3);
+  const today = new Date();
+  const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const todayStart = startOfDay(today).getTime();
+  const recent = journals
+    .filter((j) => {
+      const jd = new Date(j.date);
+      const jStart = startOfDay(jd).getTime();
+      const diffDays = Math.round((todayStart - jStart) / (1000 * 60 * 60 * 24));
+      return diffDays >= 0 && diffDays <= 2; // within last 3 calendar days
+    })
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 3);
 
   if (recent.length === 0) {
     return <p className="empty-state">日誌がありません</p>;

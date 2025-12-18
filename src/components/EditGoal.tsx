@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
 import { Goal } from '../types';
@@ -244,38 +244,6 @@ const EditGoal: React.FC<EditGoalProps> = ({ goals, onUpdateGoal }) => {
           </div>
         </form>
       </main>
-    </div>
-  );
-};
-
-interface GoalsProgressProps {
-  goals: Goal[];
-}
-
-const GoalsProgress: React.FC<GoalsProgressProps> = ({ goals }) => {
-  const activeGoals = goals.filter((g) => g.status === 'active');
-
-  if (activeGoals.length === 0) {
-    return <p className="empty-state">目標がありません</p>;
-  }
-
-  return (
-    <div className="goals-list">
-      {activeGoals.map((goal) => (
-        <div key={goal.id} className="goal-item">
-          <div className="goal-info">
-            <h3>{goal.title}</h3>
-            <p className="goal-category">{goal.category}</p>
-          </div>
-          <div className="progress-bar">
-            <div
-              className="progress-fill"
-              style={{ width: `${goal.progress}%` }}
-            ></div>
-          </div>
-          <span className="progress-text">{goal.progress}%</span>
-        </div>
-      ))}
     </div>
   );
 };
